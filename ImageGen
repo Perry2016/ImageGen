@@ -13,7 +13,7 @@ final class ViewModel: ObservableObject {
     
     func setup(){
         openai = OpenAI(Configuration(
-            organizationId: "Personal", apiKey:"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"
+            organizationId: "Personal", apiKey:"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"
         )
         )
         
@@ -48,13 +48,13 @@ final class ViewModel: ObservableObject {
     }
 }
 
-
-
 struct ContentView: View {
     @ObservedObject var viewModel = ViewModel()
-    @State var text = ""
+    @State var teamName = ""
+    @State var theme = "Holiday"
+    @State var filter = "Natural"
+    @State var resolution = "medium"
     @State var image: UIImage?
-    
     
     var body: some View {
         NavigationView{
@@ -62,42 +62,87 @@ struct ContentView: View {
                 if let image = image {
                     Image(uiImage: image)
                         .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width:150, height:150)
-                }
-                else {
-                    Text("Type prompt to generate image!")
+                        .aspectRatio(contentMode:.fit)
+                        .frame(width:300, height:300)
                 }
                 
                 Spacer()
                 
-                TextField("Type prompt here...",text: $text)
+                TextField("Team Name", text: $teamName)
                     .padding()
-                Button("Generate!"){
-                    if !text.trimmingCharacters(in: .whitespaces).isEmpty {
-                        
-                        Task {
-                            
-                            let result = await viewModel.generateImage(prompt: text)
-                            if result == nil {
-                                
-                                print("Failed to get image")
-                            }
-                            self.image = result
-                        }
-                    }
-                    
+                
+                HStack {Text("Theme").font(.subheadline).frame(width: 100, alignment: .leading)
+                    Spacer()
+                               }.padding(.horizontal)
+                
+                Picker("Theme", selection: $theme) {
+                    Text("Nature").tag("Nature")
+                    Text("Fantasy").tag("Fantasy")
+                    Text("Technology").tag("Technology")
                 }
+                .pickerStyle(SegmentedPickerStyle())
+                .padding()
+                
+                HStack {Text("Filter").font(.subheadline).frame(width: 100, alignment: .leading)
+                    Spacer()
+                               }.padding(.horizontal)
+                
+                Picker("Filter", selection: $filter) {
+                    Text("Sharpening").tag("Sharpening")
+                    Text("HDR").tag("HDR")
+                    Text("Artistic").tag("Artistic")
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .padding()
+                
+                HStack {Text("Resolution").font(.subheadline).frame(width: 100, alignment: .leading)
+                    Spacer()
+                               }.padding(.horizontal)
+                
+                Picker("Resolution", selection: $resolution) {
+                    Text("Low").tag("low")
+                    Text("Medium").tag("medium")
+                    Text("High").tag("high")
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .padding()
+                
+                Button("Generate!"){
+                    Task {
+                        let prompt = """
+                            Team Name: \(teamName)
+                            Theme: \(theme)
+                            Filter: \(filter)
+                            Resolution: \(resolution)
+                        """
+                        
+                        let result = await viewModel.generateImage(prompt: prompt)
+                        if result == nil {
+                            print("Failed to get image")
+                        }
+                        self.image = result
+                    }
+                }
+                .padding()
                 
             }
-            .navigationTitle("DALL-E Image Generator")
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Cobot ImageGen")
+                        .font(.title)
+                        .foregroundColor(.primary)
+                }
+            }
             .onAppear {
                 viewModel.setup()
             }
-            .padding()
         }
     }
 }
+
+
+
+
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
